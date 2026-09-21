@@ -1,0 +1,1 @@
+postgresql://ees_user:ees_pass@localhost:5432/ees_backend?schema=e2e

@@ -1,0 +1,33 @@
+node_modules
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/tsconfig.tsbuildinfo
+admin/node_modules
+admin/.next
+admin/out
+admin/tsconfig.tsbuildinfo
+# Keep environment variables out of version control
+.env
+.env.local
+frontend/.env.local
+admin/.env.local
+
+/generated/prisma
+
+# Backend build output (App Runner rebuilds this on every deploy)
+dist
+
+# Local-only dev upload storage (production uses S3)
+uploads
+
+# Raw source assets (product zips/images) used for one-off imports —
+# already imported into the DB/S3, not source code. ~350MB+, keep out of git.
+products_data
+
+# Test coverage output
+coverage
+
+# OS/editor noise
+.DS_Store
+*.log
