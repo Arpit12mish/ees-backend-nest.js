@@ -20,7 +20,7 @@ admin/.env.local
 dist
 
 # Local-only dev upload storage (production uses S3)
-uploads
+/uploads/
 
 # Raw source assets (product zips/images) used for one-off imports —
 # already imported into the DB/S3, not source code. ~350MB+, keep out of git.
