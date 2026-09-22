@@ -1,10 +1,34 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { readFileSync } from 'node:fs';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-  return new PrismaClient({ adapter });
+function createPrismaAdapter(): PrismaPg {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is required');
+  }
+
+  const url = new URL(databaseUrl);
+
+  // These are Prisma/libpq-style options, not PostgreSQL server parameters.
+  url.searchParams.delete('schema');
+  url.searchParams.delete('sslmode');
+
+  const caPath = process.env.DATABASE_SSL_CA_PATH;
+
+  return new PrismaPg({
+    connectionString: url.toString(),
+    ...(caPath
+      ? {
+          ssl: {
+            ca: readFileSync(caPath, 'utf8'),
+            rejectUnauthorized: true,
+          },
+        }
+      : {}),
+  });
 }
 
 @Injectable()
@@ -13,10 +37,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    const adapter = new PrismaPg({
-      connectionString: process.env.DATABASE_URL,
-    });
-    super({ adapter });
+    super({ adapter: createPrismaAdapter() });
   }
 
   async onModuleInit() {
@@ -27,6 +48,3 @@ export class PrismaService
     await this.$disconnect();
   }
 }
-
-// Suppress unused warning
-void createPrismaClient;
