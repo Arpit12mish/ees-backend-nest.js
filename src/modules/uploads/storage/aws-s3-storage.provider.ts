@@ -26,12 +26,17 @@ export class AwsS3StorageProvider implements StorageProvider {
     this.bucket = this.config.get<string>('awsS3Bucket');
     this.publicBaseUrl = this.config.get<string>('awsS3PublicBaseUrl');
 
+    const credentials =
+      this.accessKeyId && this.secretAccessKey
+        ? {
+            accessKeyId: this.accessKeyId,
+            secretAccessKey: this.secretAccessKey,
+          }
+        : undefined;
+
     this.client = new S3Client({
       region: this.region,
-      credentials: {
-        accessKeyId: this.accessKeyId ?? '',
-        secretAccessKey: this.secretAccessKey ?? '',
-      },
+      ...(credentials ? { credentials } : {}),
     });
   }
 
@@ -74,7 +79,7 @@ export class AwsS3StorageProvider implements StorageProvider {
     bucket: string;
     publicBaseUrl?: string;
   } {
-    if (!this.accessKeyId || !this.secretAccessKey || !this.bucket) {
+    if (!this.bucket) {
       throw new InternalServerErrorException({
         message: 'AWS S3 upload storage is not configured',
         errorCode: 'UPLOAD_DRIVER_NOT_CONFIGURED',

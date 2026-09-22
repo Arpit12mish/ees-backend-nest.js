@@ -42,12 +42,7 @@ export function validateEnv(
     );
   }
   if (uploadDriver === 's3') {
-    required.push(
-      'AWS_S3_REGION',
-      'AWS_S3_ACCESS_KEY_ID',
-      'AWS_S3_SECRET_ACCESS_KEY',
-      'AWS_S3_BUCKET',
-    );
+    required.push('AWS_S3_REGION', 'AWS_S3_BUCKET');
   }
 
   const missing = required.filter((key) => !getEnvValue(config, key));
