@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getCategories } from '@/lib/api/categories.api';
 import { getServerToken } from '@/lib/auth/server-token';
 import { SectionHeading } from '@/components/common/SectionHeading';
@@ -9,7 +10,14 @@ export default async function NewProductPage() {
 
   return (
     <div>
-      <SectionHeading title="New product" />
+      <SectionHeading
+        title="New product"
+        action={
+          <Link href="/products" className="text-sm font-semibold text-[var(--brand)]">
+            ← Back to products
+          </Link>
+        }
+      />
       <ProductForm mode="create" categories={categories} />
     </div>
   );

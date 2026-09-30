@@ -82,12 +82,32 @@ export function ProductImageManager({
     setImages(images.filter((img) => img.id !== imageId));
   }
 
+  function handlePaste(event: React.ClipboardEvent<HTMLDivElement>) {
+    if (uploading) return;
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const pasted = item.getAsFile();
+        if (pasted) {
+          event.preventDefault();
+          setFile(pasted);
+        }
+        return;
+      }
+    }
+  }
+
   return (
     <div className="rounded-lg border border-[var(--border)] bg-white p-4 sm:p-6">
       <h3 className="font-semibold text-[var(--heading)]">Images</h3>
 
       <RoleGate permission="products.images.write">
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div
+          tabIndex={0}
+          onPaste={handlePaste}
+          className="mt-3 flex flex-col gap-2 rounded-md border border-dashed border-[var(--border)] p-3 focus:border-[var(--brand)] focus:outline-none sm:flex-row sm:items-end"
+        >
           <div className="flex-1">
             <label className="block text-sm font-medium text-[var(--heading)]">File</label>
             <input
@@ -96,6 +116,9 @@ export function ProductImageManager({
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="mt-1 w-full text-sm"
             />
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              {file ? `Selected: ${file.name}` : 'Click this box and paste (⌘V / Ctrl+V) to add an image from your clipboard.'}
+            </p>
           </div>
           <div className="flex-1">
             <label className="block text-sm font-medium text-[var(--heading)]">Alt text</label>

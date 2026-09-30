@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getProduct } from '@/lib/api/products.api';
 import { getCategories } from '@/lib/api/categories.api';
@@ -26,7 +27,15 @@ export default async function EditProductPage({
 
   return (
     <div className="space-y-6">
-      <SectionHeading title={product.name} eyebrow="Product" />
+      <SectionHeading
+        title={product.name}
+        eyebrow="Product"
+        action={
+          <Link href="/products" className="text-sm font-semibold text-[var(--brand)]">
+            ← Back to products
+          </Link>
+        }
+      />
       <ProductForm mode="edit" initial={product} categories={categories} />
       <ProductStatusControl productId={product.id} currentStatus={product.status} />
       <ProductImageManager productId={product.id} initialImages={product.images} />

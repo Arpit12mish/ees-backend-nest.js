@@ -10,3 +10,11 @@ export type UploadImageResult = {
   mimeType: string;
   size: number;
 };
+
+export type UploadVideoResult = {
+  provider: string;
+  storageKey: string;
+  url: string;
+  mimeType: string;
+  size: number;
+};

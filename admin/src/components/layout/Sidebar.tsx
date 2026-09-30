@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAdminAuth } from '@/lib/auth/AdminAuthContext';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Dashboard' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/products', label: 'Products' },
+  { href: '/hero-reels', label: 'Hero Reels' },
   { href: '/categories', label: 'Categories' },
   { href: '/collections', label: 'Collections' },
   { href: '/services', label: 'Services' },
@@ -22,6 +24,11 @@ const NAV_ITEMS = [
   { href: '/contact-leads', label: 'Contact Leads' },
 ];
 
+// Admin account management is deliberately invisible to anyone but
+// Super Admins — it isn't listed in NAV_ITEMS and is appended separately,
+// matching the backend controller's class-level @Roles(SUPER_ADMIN) guard.
+const ADMIN_USERS_ITEM = { href: '/admin-users', label: 'Admin Accounts' };
+
 function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -29,9 +36,12 @@ function isActive(pathname: string, href: string) {
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const admin = useAdminAuth();
+  const items =
+    admin.role === 'SUPER_ADMIN' ? [...NAV_ITEMS, ADMIN_USERS_ITEM] : NAV_ITEMS;
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => (
+      {items.map((item) => (
         <Link
           key={item.href}
           href={item.href}

@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createGuide, updateGuide } from '@/lib/api/guides.api';
-import { uploadImage } from '@/lib/api/uploads.api';
 import { getClientToken } from '@/lib/auth/token-cookie';
-import { resolveImageUrl } from '@/lib/utils/image-url';
 import { ErrorState } from '@/components/common/ErrorState';
+import { ImageUploadField } from '@/components/common/ImageUploadField';
 import type { Guide, GuideInput, GuideStatus } from '@/lib/types/guide.types';
 
 export function GuideForm({
@@ -28,23 +27,7 @@ export function GuideForm({
     status: initial?.status ?? 'DRAFT',
   });
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-
-  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setError('');
-    try {
-      const result = await uploadImage(file, getClientToken());
-      setForm((prev) => ({ ...prev, coverImageUrl: result.detailUrl }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to upload image');
-    } finally {
-      setUploading(false);
-    }
-  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -131,25 +114,12 @@ export function GuideForm({
           className="mt-1 w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:border-[var(--brand)] focus:outline-none"
         />
       </div>
-      <div>
-        <label className="block text-sm font-medium text-[var(--heading)]">Cover image</label>
-        {form.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={resolveImageUrl(form.coverImageUrl)}
-            alt="Guide cover"
-            className="mt-2 h-32 w-32 rounded-md border border-[var(--border)] object-cover"
-          />
-        ) : null}
-        <input
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          onChange={handleFileChange}
-          disabled={uploading}
-          className="mt-2 block text-sm"
-        />
-        {uploading ? <p className="mt-1 text-xs text-[var(--muted)]">Uploading…</p> : null}
-      </div>
+      <ImageUploadField
+        label="Cover image"
+        value={form.coverImageUrl}
+        onChange={(coverImageUrl) => setForm({ ...form, coverImageUrl })}
+        disabled={saving}
+      />
       <div>
         <label className="block text-sm font-medium text-[var(--heading)]">Status</label>
         <select
@@ -167,7 +137,7 @@ export function GuideForm({
 
       <button
         type="submit"
-        disabled={saving || uploading}
+        disabled={saving}
         className="min-h-11 rounded-md bg-[var(--brand)] px-5 text-sm font-semibold text-white hover:bg-[var(--brand-dark)] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {saving ? 'Saving…' : mode === 'create' ? 'Create guide' : 'Save changes'}

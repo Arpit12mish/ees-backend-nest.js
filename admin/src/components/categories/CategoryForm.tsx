@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createCategory, updateCategory } from '@/lib/api/categories.api';
 import { getClientToken } from '@/lib/auth/token-cookie';
 import { ErrorState } from '@/components/common/ErrorState';
+import { ImageUploadField } from '@/components/common/ImageUploadField';
 import type { Category, CategoryInput } from '@/lib/types/category.types';
 
 export function CategoryForm({
@@ -81,14 +82,12 @@ export function CategoryForm({
           className="mt-1 w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:border-[var(--brand)] focus:outline-none"
         />
       </div>
-      <div>
-        <label className="block text-sm font-medium text-[var(--heading)]">Image URL</label>
-        <input
-          value={form.imageUrl}
-          onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-          className="mt-1 w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:border-[var(--brand)] focus:outline-none"
-        />
-      </div>
+      <ImageUploadField
+        label="Image"
+        value={form.imageUrl}
+        onChange={(imageUrl) => setForm({ ...form, imageUrl })}
+        disabled={saving}
+      />
       <div className="flex gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--heading)]">Priority</label>

@@ -1,4 +1,4 @@
-export type AdminRoleValue = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR';
+export type AdminRoleValue = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'PARTNER';
 
 export type AdminUser = {
   id: string;

@@ -1,0 +1,555 @@
+<title>Admin Workflow Audit</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#f6f5f2; --panel:#ffffff; --panel-2:#fbfaf8; --ink:#181a1f; --muted:#686c74;
+    --border:#dfdcd4; --border-2:#cfccc2; --accent:#3453d1; --accent-ink:#1f3aa8;
+    --ok:#177a4a; --ok-bg:#e5f3ea; --warn:#9a6407; --warn-bg:#fbf0da;
+    --bad:#b23a2e; --bad-bg:#fbe7e4; --unknown:#6f4fb5; --unknown-bg:#efe8fb;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#131417; --panel:#1a1c21; --panel-2:#1f2126; --ink:#e9e8e4; --muted:#9a9ea6;
+      --border:#2c2e34; --border-2:#3a3d44; --accent:#7c94ff; --accent-ink:#a8b7ff;
+      --ok:#5fd39a; --ok-bg:#12281f; --warn:#e3b158; --warn-bg:#2e2410;
+      --bad:#ef8579; --bad-bg:#301613; --unknown:#b79cf0; --unknown-bg:#241a34;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#131417; --panel:#1a1c21; --panel-2:#1f2126; --ink:#e9e8e4; --muted:#9a9ea6;
+    --border:#2c2e34; --border-2:#3a3d44; --accent:#7c94ff; --accent-ink:#a8b7ff;
+    --ok:#5fd39a; --ok-bg:#12281f; --warn:#e3b158; --warn-bg:#2e2410;
+    --bad:#ef8579; --bad-bg:#301613; --unknown:#b79cf0; --unknown-bg:#241a34;
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans',system-ui,sans-serif; line-height:1.55;}
+  .wrap{max-width:920px; margin:0 auto; padding:40px 20px 96px;}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+
+  header.top{padding-bottom:28px; border-bottom:1px solid var(--border); margin-bottom:32px;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-ink); margin:0 0 10px;}
+  h1{font-size:clamp(28px,4.5vw,38px); margin:0 0 10px; font-weight:700; letter-spacing:-.01em; text-wrap:balance;}
+  .subtitle{color:var(--muted); font-size:15px; max-width:60ch; margin:0 0 18px;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px 10px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted);}
+  .meta-row span{white-space:nowrap;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;}
+  .chip{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; font-size:12.5px; font-weight:600; border:1px solid transparent;}
+  .chip.ok{background:var(--ok-bg); color:var(--ok);}
+  .chip.warn{background:var(--warn-bg); color:var(--warn);}
+  .chip.bad{background:var(--bad-bg); color:var(--bad);}
+  .chip.unknown{background:var(--unknown-bg); color:var(--unknown);}
+  .chip .dot{width:6px; height:6px; border-radius:50%; background:currentColor;}
+
+  nav.toc{background:var(--panel-2); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin-bottom:40px;}
+  nav.toc p{margin:0 0 10px; font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);}
+  nav.toc ol{margin:0; padding-left:20px; columns:2; column-gap:24px; font-size:13.5px;}
+  nav.toc li{margin-bottom:6px; break-inside:avoid;}
+  nav.toc a{color:var(--ink); text-decoration:none;}
+  nav.toc a:hover{color:var(--accent);}
+
+  section{margin-bottom:48px;}
+  section h2{font-size:22px; margin:0 0 6px; font-weight:700; letter-spacing:-.01em; scroll-margin-top:20px;}
+  section .h2-sub{color:var(--muted); font-size:13.5px; margin:0 0 20px;}
+  h3{font-size:15px; margin:24px 0 8px; font-weight:600;}
+  p{margin:0 0 14px; max-width:72ch;}
+  ul, ol{margin:0 0 14px; padding-left:22px;}
+  li{margin-bottom:6px; max-width:70ch;}
+  strong{font-weight:600;}
+
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px 22px;}
+
+  .summary-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; margin-bottom:8px;}
+  .stat{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px 18px;}
+  .stat .label{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:6px;}
+  .stat .value{font-size:15px; font-weight:600; line-height:1.4;}
+  .stat .value.mono{font-family:'IBM Plex Mono',monospace; font-size:13.5px;}
+
+  .tbl-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:12px;}
+  table{border-collapse:collapse; width:100%; min-width:1080px; font-size:13px; background:var(--panel);}
+  thead th{position:sticky; top:0; background:var(--panel-2); text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:10px 14px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--panel-2);}
+  td.feature{font-weight:600; white-space:nowrap;}
+  td .path{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); display:block;}
+  td .path + .path{margin-top:3px;}
+  .status-pill{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;}
+  .status-pill.ok{background:var(--ok-bg); color:var(--ok);}
+  .status-pill.warn{background:var(--warn-bg); color:var(--warn);}
+  .status-pill.bad{background:var(--bad-bg); color:var(--bad);}
+  td.gap{color:var(--muted); font-size:12.5px; max-width:220px;}
+  td.gap.flag{color:var(--bad); font-weight:500;}
+
+  .diagram{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; overflow-x:auto;}
+
+  .risk-list{display:grid; gap:10px;}
+  .risk{display:grid; grid-template-columns:auto 1fr; gap:14px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; align-items:start;}
+  .risk .sev{font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:3px 8px; border-radius:5px; white-space:nowrap; margin-top:1px;}
+  .risk .sev.high{background:var(--bad-bg); color:var(--bad);}
+  .risk .sev.med{background:var(--warn-bg); color:var(--warn);}
+  .risk .sev.info{background:var(--unknown-bg); color:var(--unknown);}
+  .risk p{margin:0;}
+  .risk .title{font-weight:600; margin-bottom:3px; display:block;}
+
+  .plan{counter-reset:step; display:grid; gap:0;}
+  .step{position:relative; padding:0 0 22px 40px; border-left:2px solid var(--border);}
+  .step:last-child{border-left-color:transparent; padding-bottom:0;}
+  .step::before{counter-increment:step; content:counter(step); position:absolute; left:-15px; top:0; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .step .title{font-weight:600; margin-bottom:4px; display:block;}
+  .step .owner{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; padding:2px 8px; border-radius:5px; margin-bottom:8px;}
+  .step .owner.mine{background:var(--ok-bg); color:var(--ok);}
+  .step .owner.yours{background:var(--warn-bg); color:var(--warn);}
+  .step p{margin:0; font-size:13.5px; color:var(--muted);}
+  .step pre{margin:10px 0 0; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:12px; overflow-x:auto; color:var(--ink);}
+
+  .verify-grid{display:grid; gap:10px;}
+  .verify{display:grid; grid-template-columns:auto 1fr; gap:14px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; align-items:start;}
+  .verify .check{color:var(--ok); font-weight:700; font-family:'IBM Plex Mono',monospace; margin-top:1px;}
+  .verify .title{font-weight:600; display:block; margin-bottom:3px;}
+  .verify p{margin:0; font-size:13.5px; color:var(--muted);}
+
+  .filelist{columns:2; column-gap:24px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--muted); padding-left:0; list-style:none; margin:0;}
+  .filelist li{margin-bottom:5px; break-inside:avoid;}
+
+  .unverified-list{display:grid; gap:10px;}
+  .unverified{background:var(--unknown-bg); border:1px solid var(--border); border-radius:10px; padding:14px 16px;}
+  .unverified .title{color:var(--unknown); font-weight:600; display:block; margin-bottom:3px; font-size:13.5px;}
+  .unverified p{margin:0; font-size:13.5px; color:var(--ink);}
+
+  footer{border-top:1px solid var(--border); padding-top:20px; margin-top:56px; color:var(--muted); font-size:12.5px;}
+
+  @media (max-width:640px){
+    nav.toc ol{columns:1;}
+    .filelist{columns:1;}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <p class="eyebrow">Production readiness audit · Enchanted Energy Store</p>
+    <h1>Admin Workflow Audit</h1>
+    <p class="subtitle">Evidence gathered directly from git history, live production endpoints, and a local end-to-end test — not from prior status reports in this project.</p>
+    <div class="meta-row">
+      <span>Repo: github.com/Arpit12mish/ees-backend-nest.js</span>
+      <span>·</span>
+      <span>HEAD: ba4fc0c</span>
+      <span>·</span>
+      <span>Audited 2026-09-29</span>
+    </div>
+    <div class="chips">
+      <span class="chip ok"><span class="dot"></span>Storefront live (Vercel)</span>
+      <span class="chip ok"><span class="dot"></span>Backend live (EC2)</span>
+      <span class="chip bad"><span class="dot"></span>Admin app not deployed</span>
+      <span class="chip warn"><span class="dot"></span>Fixes implemented, not yet pushed</span>
+      <span class="chip unknown"><span class="dot"></span>Prod admin login unverified</span>
+    </div>
+    <p style="margin-top:16px; font-size:13px; color:var(--muted);">Updated after implementation — see <a href="#verified" style="color:var(--accent-ink);">what was built and verified</a> below.</p>
+  </header>
+
+  <nav class="toc">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#summary">Executive summary</a></li>
+      <li><a href="#diagram">Deployment diagram</a></li>
+      <li><a href="#findings">Findings by feature</a></li>
+      <li><a href="#files">Files &amp; config inspected</a></li>
+      <li><a href="#risks">Risks</a></li>
+      <li><a href="#plan">Ordered plan</a></li>
+      <li><a href="#verified">Implemented &amp; verified</a></li>
+      <li><a href="#unverified">Flagged as unverifiable</a></li>
+    </ol>
+  </nav>
+
+  <section id="summary">
+    <h2>Executive summary</h2>
+    <p class="h2-sub">The short version, before the evidence.</p>
+
+    <div class="summary-grid">
+      <div class="stat"><div class="label">Storefront</div><div class="value">Live on Vercel<br>enchantedenergystore.com</div></div>
+      <div class="stat"><div class="label">Backend</div><div class="value">Live on a plain EC2 box<br>(not App Runner)</div></div>
+      <div class="stat"><div class="label">Admin app</div><div class="value">Built, but not deployed<br>anywhere — runs only locally</div></div>
+      <div class="stat"><div class="label">Production catalog</div><div class="value mono">82 products · 9 categories</div></div>
+      <div class="stat"><div class="label">Production admin login</div><div class="value">Cannot verify without<br>SSH/DB access (see below)</div></div>
+      <div class="stat"><div class="label">Unpushed local work</div><div class="value">Hero Reels feature + 5 other<br>files, 8 new files, none on GitHub</div></div>
+    </div>
+
+    <h3>What changed from the last status report in this project</h3>
+    <ul>
+      <li>The storefront <strong>is</strong> already deployed and serving real traffic on Vercel — an earlier status report in this project said otherwise. Confirmed via live response headers (<code>server: Vercel</code>, Next.js prerender headers) against <code>https://enchantedenergystore.com</code>.</li>
+      <li>The backend does <strong>not</strong> run on AWS App Runner, which is what was originally planned and guided. It runs on a bare EC2 instance behind nginx, with Let's Encrypt TLS and a custom RDS CA certificate trust file. This was discovered from response headers (<code>Server: nginx/1.28.3 (Ubuntu)</code>) and reverse DNS on the resolved IP (<code>ec2-65-1-101-184.ap-south-1.compute.amazonaws.com</code>), corroborated by two git commits ("Support EC2 IAM role for S3 uploads", "Configure trusted RDS TLS certificate").</li>
+      <li>Production already has real catalog data (82 products), meaning a data migration happened at some point after the last visible session state.</li>
+    </ul>
+
+    <h3>The one real gap found</h3>
+    <ul>
+      <li><strong>No partner/admin-account management</strong> — there is no endpoint anywhere to create, list, or deactivate admin accounts. The only role values that exist are <code>SUPER_ADMIN</code>, <code>ADMIN</code>, <code>EDITOR</code>; accounts can only be created via <code>prisma/seed.ts</code> (env-var-driven, one fixed email) or direct database access.</li>
+    </ul>
+    <p>Every admin section — Products, Categories, Collections, Coupons, Inventory, Orders, SEO, Reviews, Guides, FAQs, Services, Contact Leads, Analytics — has a matching backend route for every UI action, with correct role guards. The product create → image upload → publish → price-edit flow was tested live against the local environment end to end and worked correctly at every step. Contact Leads (<code>src/modules/contact/admin-contact.controller.ts</code>) was initially flagged here as missing — a first pass only searched <code>src/modules/admin/**</code> and missed that this controller lives in its own domain folder instead. Rechecked directly and confirmed live against the local backend before publishing; it works correctly.</p>
+  </section>
+
+  <section id="diagram">
+    <h2>Deployment diagram</h2>
+    <p class="h2-sub">As currently deployed — not as originally planned.</p>
+    <div class="diagram">
+<pre class="mermaid">
+flowchart TB
+    subgraph client["Browser"]
+        U["Shopper / Partner"]
+    end
+
+    subgraph vercel["Vercel"]
+        FE["Storefront — Next.js<br/>enchantedenergystore.com<br/>LIVE"]
+        ADM["Admin app — Next.js<br/>NOT DEPLOYED<br/>(runs only on localhost:3001)"]
+    end
+
+    subgraph aws["AWS · ap-south-1"]
+        subgraph ec2["EC2 instance (nginx + Let's Encrypt)"]
+            API["NestJS backend<br/>api.enchantedenergystore.com<br/>process manager: unverified"]
+        end
+        RDS[("RDS PostgreSQL<br/>custom CA trust file")]
+        S3[("S3 bucket<br/>accessed via EC2 instance role,<br/>no static keys")]
+    end
+
+    U -->|HTTPS| FE
+    U -.->|only reachable from this laptop today| ADM
+    FE -->|"fetch /api/public/*<br/>ISR revalidate: 300–600s"| API
+    ADM -->|"Bearer JWT<br/>/api/admin/*"| API
+    API --> RDS
+    API -->|IAM role creds| S3
+    FE -->|"next/image proxy"| S3
+</pre>
+    </div>
+  </section>
+
+  <section id="findings">
+    <h2>Findings by feature</h2>
+    <p class="h2-sub">Every admin section, cross-referenced against its backend routes and storefront effect. Verified by reading <code>admin/src/lib/api/*.ts</code> against every <code>@Controller</code>/<code>@Get</code>/<code>@Post</code>/<code>@Patch</code>/<code>@Delete</code> in <code>src/modules/admin/**</code>, then exercising the product flow live.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Admin UI</th>
+            <th>Backend endpoint</th>
+            <th>DB / S3 effect</th>
+            <th>Storefront effect</th>
+            <th>Status</th>
+            <th>Exact gap</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="feature">Auth</td>
+            <td><span class="path">/login</span></td>
+            <td><span class="path">POST /admin/auth/login</span><span class="path">GET /admin/auth/me</span></td>
+            <td>Reads AdminUser, verifies bcrypt hash</td>
+            <td>—</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Products</td>
+            <td><span class="path">/products</span><span class="path">/products/[id]</span></td>
+            <td><span class="path">/admin/products*</span><span class="path">/admin/product-images*</span></td>
+            <td>Product, ProductImage rows; image bytes to S3</td>
+            <td><span class="path">/products/[slug]</span>, home Best Sellers</td>
+            <td><span class="status-pill ok">Working end to end</span></td>
+            <td class="gap flag">Tested live: draft → image → publish → price edit all correct. Storefront only reflects a change within its 5–10 min ISR window unless it's the page's first hit — no on-demand revalidation exists yet.</td>
+          </tr>
+          <tr>
+            <td class="feature">Categories</td>
+            <td><span class="path">/categories</span></td>
+            <td><span class="path">/admin/categories*</span></td>
+            <td>Category rows</td>
+            <td><span class="path">/categories/[slug]</span></td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">EDITOR role cannot create/edit categories — appears intentional, not a bug</td>
+          </tr>
+          <tr>
+            <td class="feature">Collections</td>
+            <td><span class="path">/collections</span></td>
+            <td><span class="path">/admin/collections*</span></td>
+            <td>Collection, CollectionProduct rows</td>
+            <td><span class="path">/collections/[slug]</span></td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Coupons</td>
+            <td><span class="path">/coupons</span></td>
+            <td><span class="path">/admin/coupons*</span></td>
+            <td>Coupon rows</td>
+            <td>Checkout coupon apply</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Inventory</td>
+            <td><span class="path">/inventory</span></td>
+            <td><span class="path">/admin/inventory*</span></td>
+            <td>Product.inventoryQuantity, stockStatus</td>
+            <td>Stock badges on product pages</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Orders</td>
+            <td><span class="path">/orders</span></td>
+            <td><span class="path">/admin/orders*</span></td>
+            <td>Order, OrderItem, Payment rows</td>
+            <td>—</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">SEO metadata</td>
+            <td><span class="path">/seo</span></td>
+            <td><span class="path">/admin/seo*</span></td>
+            <td>SeoMetadata rows</td>
+            <td>Meta tags per entity page</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Reviews</td>
+            <td><span class="path">/reviews</span></td>
+            <td><span class="path">/admin/reviews*</span></td>
+            <td>Review rows</td>
+            <td>Rating/review list on product page</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Guides</td>
+            <td><span class="path">/guides</span></td>
+            <td><span class="path">/admin/guides*</span></td>
+            <td>Guide rows</td>
+            <td><span class="path">/guides/[slug]</span></td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">FAQs</td>
+            <td><span class="path">/faqs</span></td>
+            <td><span class="path">/admin/faqs*</span></td>
+            <td>Faq rows</td>
+            <td>FAQ sections</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Services + bookings</td>
+            <td><span class="path">/services</span><span class="path">/service-bookings</span></td>
+            <td><span class="path">/admin/services*</span><span class="path">/admin/service-bookings*</span></td>
+            <td>Service, ServiceBooking rows</td>
+            <td><span class="path">/services</span>, home</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Hero Reels</td>
+            <td><span class="path">/hero-reels</span></td>
+            <td><span class="path">/admin/hero-reels*</span></td>
+            <td>HeroReel rows, video files to S3</td>
+            <td>Home hero carousel</td>
+            <td><span class="status-pill warn">Built, not shipped</span></td>
+            <td class="gap flag">Fully working locally (tested this session) but 100% uncommitted — 404s in production because it was never pushed</td>
+          </tr>
+          <tr>
+            <td class="feature">Contact Leads</td>
+            <td><span class="path">/contact-leads</span></td>
+            <td><span class="path">/admin/contact-leads*</span></td>
+            <td>ContactLead rows</td>
+            <td>—</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None — verified live. Controller lives at <code>src/modules/contact/admin-contact.controller.ts</code>, outside the usual <code>admin/</code> folder, which caused a false-positive in the first pass of this audit.</td>
+          </tr>
+          <tr>
+            <td class="feature">Analytics</td>
+            <td><span class="path">/analytics</span></td>
+            <td><span class="path">/admin/analytics*</span></td>
+            <td>Reads AnalyticsEvent aggregates</td>
+            <td>—</td>
+            <td><span class="status-pill ok">Working</span></td>
+            <td class="gap">None found</td>
+          </tr>
+          <tr>
+            <td class="feature">Admin / partner accounts</td>
+            <td><span class="path">none</span></td>
+            <td><span class="path">none</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="status-pill bad">Missing entirely</span></td>
+            <td class="gap flag">No endpoint to create, list, or deactivate admin accounts. No <code>PARTNER</code> role exists. Only path today is editing <code>prisma/seed.ts</code> env vars or direct DB writes.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="files">
+    <h2>Files &amp; configuration inspected</h2>
+    <p class="h2-sub">Read directly, or grepped for route/permission coverage — not assumed from memory of earlier work in this project.</p>
+    <div class="panel">
+      <ul class="filelist">
+        <li>.git log/status/remote, all 5 commits</li>
+        <li>src/database/prisma.service.ts</li>
+        <li>src/modules/uploads/storage/aws-s3-storage.provider.ts</li>
+        <li>src/config/env.validation.ts</li>
+        <li>src/main.ts (CORS, helmet, prefix)</li>
+        <li>src/modules/auth/guards/*.ts</li>
+        <li>src/modules/auth/strategies/jwt.strategy.ts</li>
+        <li>src/modules/contact/contact.controller.ts + .service.ts</li>
+        <li>src/modules/admin/**/*.controller.ts (all 15)</li>
+        <li>admin/src/lib/api/*.ts (all 17 clients)</li>
+        <li>admin/src/lib/auth/token-cookie.ts</li>
+        <li>admin/src/lib/auth/server-token.ts</li>
+        <li>admin/src/lib/auth/AdminAuthContext.tsx</li>
+        <li>admin/.env.local, admin/.env.example</li>
+        <li>frontend/.env.local, frontend/src/lib/api/products.api.ts</li>
+        <li>src/common/constants/cache.constants.ts</li>
+        <li>docs/DEPLOYMENT_GUIDE.md (stale, pre-dates EC2 move)</li>
+        <li>Live: curl against api.enchantedenergystore.com (health, CORS preflight x2, products, hero-reels)</li>
+        <li>Live: curl + dig + openssl against enchantedenergystore.com</li>
+        <li>Live: local end-to-end product test (create → upload → attach → publish → edit → verify)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="risks">
+    <h2>Risks</h2>
+    <div class="risk-list">
+      <div class="risk">
+        <span class="sev high">High</span>
+        <p><span class="title">Unpushed work is laptop-only</span>Hero Reels (full stack) plus five other modified files exist only in this working tree. A lost or wiped laptop loses them; nothing is recoverable from GitHub or production today.</p>
+      </div>
+      <div class="risk">
+        <span class="sev high">High</span>
+        <p><span class="title">No known way into production as an admin</span>The default dev credentials are rejected by production, and there is no account-management endpoint to create a new one remotely. Until this is resolved, nobody can use the admin dashboard against production even once it's deployed.</p>
+      </div>
+      <div class="risk">
+        <span class="sev med">Medium</span>
+        <p><span class="title">Deployment mechanism on EC2 is opaque</span>No deploy script, systemd unit, or PM2 config is checked into the repo. How code actually reaches that box (manual SSH + git pull + restart, or something else) could not be determined from the repository alone.</p>
+      </div>
+      <div class="risk">
+        <span class="sev med">Medium</span>
+        <p><span class="title">TLS certificate expires Dec 21, 2026</span>Let's Encrypt issued Sep 22. Whether certbot auto-renewal is configured on the EC2 box could not be verified from here.</p>
+      </div>
+      <div class="risk">
+        <span class="sev med">Medium</span>
+        <p><span class="title">Publish → storefront visibility has no floor below ~5 minutes</span>Next.js ISR revalidates product listings every 300s and product detail every 600s, with no on-demand revalidation. A partner publishing a price change may reasonably expect it live sooner than that.</p>
+      </div>
+      <div class="risk">
+        <span class="sev info">Info</span>
+        <p><span class="title">Admin JWT sits in a JS-readable cookie</span>Needed today because both server components and client components read it. Not a CSRF risk — the backend only accepts the token via the <code>Authorization</code> header, never ambient cookie auth — but an XSS bug in the admin app would be able to read it. Standard trade-off for this app shape, worth knowing rather than fixing reflexively.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="plan">
+    <h2>Ordered implementation plan</h2>
+    <p class="h2-sub">What I'll do now in the repository, and what stays a manual, reviewed step against production.</p>
+    <div class="plan">
+      <div class="step">
+        <span class="owner mine">Done this session</span>
+        <span class="title">PARTNER role scoped to products only</span>
+        <p>New migration (applied locally only — <code>20260929141745_add_partner_admin_role</code>). PARTNER can create/edit/publish products, manage product images, and write SEO. Tested live: can publish a product, blocked (403) from viewing orders, deleting products, and admin accounts.</p>
+      </div>
+      <div class="step">
+        <span class="owner mine">Done this session</span>
+        <span class="title">Admin-account management endpoint</span>
+        <p>SUPER_ADMIN-only <code>/admin/admin-users</code> — create, list, deactivate. Tested live: created a PARTNER account, logged in as it, deactivated it again.</p>
+      </div>
+      <div class="step">
+        <span class="owner mine">Done this session</span>
+        <span class="title">On-demand storefront revalidation</span>
+        <p>Product publish/update/status-change fires a signed, fire-and-forget request to a new frontend route. Tested live end to end: edited a real product's price, the storefront page showed the new price on the very next request — no waiting out the ISR window.</p>
+      </div>
+      <div class="step">
+        <span class="owner mine">Done this session</span>
+        <span class="title">Environment-specific admin API config</span>
+        <p><code>admin/.env.production.example</code> added, pointed at the real API domain. No secret goes in a <code>NEXT_PUBLIC_</code> variable anywhere in the codebase.</p>
+      </div>
+      <div class="step">
+        <span class="owner yours">Yours to review &amp; run</span>
+        <span class="title">Review the diff, then push to GitHub</span>
+        <p>Nothing in this session touched production. Review locally, then:</p>
+        <pre>git status
+git diff
+git add -A
+git commit -m "Add PARTNER role, admin-account management, on-demand revalidation"
+git push origin main</pre>
+      </div>
+      <div class="step">
+        <span class="owner yours">Yours to review &amp; run</span>
+        <span class="title">Deploy the backend update to the EC2 box</span>
+        <p>Exact steps depend on how that box is actually managed today, which couldn't be verified from the repo (no deploy script is checked in). Typically: SSH in, <code>git pull</code>, <code>npm ci</code>, <code>npx prisma generate</code>, <code>npm run build</code>, restart the process, then set <code>REVALIDATE_SECRET</code> in its env (generate with <code>openssl rand -base64 32</code>).</p>
+      </div>
+      <div class="step">
+        <span class="owner yours">Yours to review &amp; run</span>
+        <span class="title">Run the new migration against production RDS</span>
+        <pre>npx prisma migrate deploy</pre>
+        <p>Adds only <code>PARTNER</code> to the <code>AdminRole</code> enum — reviewed, no data changes.</p>
+      </div>
+      <div class="step">
+        <span class="owner yours">Yours to review &amp; run</span>
+        <span class="title">Set the matching REVALIDATE_SECRET on the storefront (Vercel)</span>
+        <p>Same value as the backend's, as a plain (non-<code>NEXT_PUBLIC_</code>) environment variable on the storefront's Vercel project — Settings → Environment Variables → Production.</p>
+      </div>
+      <div class="step">
+        <span class="owner yours">Yours to review &amp; run</span>
+        <span class="title">Deploy admin/ to Vercel</span>
+        <p>New Vercel project, root directory <code>admin/</code>. Set <code>NEXT_PUBLIC_API_BASE_URL=https://api.enchantedenergystore.com/api</code> (see <code>admin/.env.production.example</code>). Then add that Vercel domain to the backend's <code>CORS_ORIGIN</code> env var (comma-separated) and redeploy the backend, or admin's API calls will be blocked by CORS.</p>
+      </div>
+      <div class="step">
+        <span class="owner yours">Yours to review &amp; run</span>
+        <span class="title">Create the first production admin, then invite partners</span>
+        <p>Once a working production SUPER_ADMIN login exists (see the unverifiable item below for how to get one), use it to sign into the deployed admin app and create PARTNER accounts from <strong>Admin Accounts → New account</strong> — no database access needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="verified">
+    <h2>Implemented &amp; verified</h2>
+    <p class="h2-sub">Every change below was tested against the local environment before being reported done — not just written and assumed correct.</p>
+    <div class="verify-grid">
+      <div class="verify"><span class="check">✓</span><p><span class="title">Full product lifecycle, live</span>Created a draft product via the API, confirmed it 404s on the public storefront while draft, uploaded a real image to S3 and attached it, published it, confirmed it appears immediately on the backend and (via revalidation) on the storefront, edited its price, confirmed the new price live — then deleted the test product.</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">PARTNER role boundaries, live</span>Created a real PARTNER account, logged in as it: could create and publish a product (yes), could delete a product (403), could view orders (403 — this is the one gap the live test caught and fixed: orders had no role gate on its GET routes at all), could view admin accounts (403).</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">On-demand revalidation, live</span>Loaded a real product page to prime the ISR cache, edited its price via the admin API, reloaded the page immediately — new price appeared with no wait. Reverted the price back afterward.</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">Admin-account management, live</span>Created a PARTNER account via the new endpoint, confirmed login works, deactivated it, confirmed the account list reflects it.</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">create-admin script, live</span><code>npm run create-admin</code> against the local database, confirmed the account could log in, then removed it. Catalog tables untouched — confirmed by row counts before/after.</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">Type-checked</span><code>npx tsc --noEmit</code> clean on the backend, admin app, and frontend.</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">Linted</span><code>npm run lint</code> clean on all three apps (one real issue found and fixed: an unescaped apostrophe).</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">Built</span><code>npm run build</code> (Nest) clean.</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">Unit tests</span>6/6 passing.</p></div>
+      <div class="verify"><span class="check">✓</span><p><span class="title">E2E tests — pre-existing, unrelated failure found</span>The suite fails in its global setup on a migration from Sep 5 (<code>add_product_search_vector</code>), before it ever reaches anything from this session — a missing <code>pg_trgm</code> Postgres extension in the isolated test schema. Confirmed unrelated to this work; not fixed, since it's outside this task's scope.</p></div>
+    </div>
+  </section>
+
+  <section id="unverified">
+    <h2>Flagged as unverifiable</h2>
+    <p class="h2-sub">Could not be confirmed from this environment. Not assumed either way.</p>
+    <div class="unverified-list">
+      <div class="unverified"><span class="title">Whether a working production admin account exists</span><p>The default dev credentials are rejected. That's consistent with either a different real account existing, or none existing at all — the API returns the same generic error either way, deliberately. No further login attempts were made, and <code>npx prisma db seed</code> was deliberately <strong>not</strong> recommended here — it runs the full <code>prisma/seed.ts</code>, which also upserts the entire demo catalog (categories, products, a coupon), not just an admin. <strong>Safe bootstrap procedure instead:</strong> a new script added this session, <code>prisma/create-admin.ts</code>, touches only the <code>AdminUser</code> table. Tested locally against the dev database before being recommended here. Once the backend update is deployed, SSH into the EC2 box and run:</p><pre style="margin-top:8px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:12px; overflow-x:auto;">ADMIN_EMAIL=you@yourdomain.com \
+ADMIN_PASSWORD='a real strong password' \
+npm run create-admin</pre><p style="margin-top:8px;">Upserts by email, so it's safe to re-run even if that address already exists — it just resets the password. Change the password after first login if you like. Every account after this first one goes through the new Admin Accounts screen instead.</p></div>
+      <div class="unverified"><span class="title">How deployments actually reach the EC2 box</span><p>No deploy script, CI config, systemd unit, or PM2 file is checked into the repository.</p></div>
+      <div class="unverified"><span class="title">TLS certificate auto-renewal</span><p>Whether a certbot timer or cron job is configured on the box.</p></div>
+      <div class="unverified"><span class="title">S3 bucket policy document</span><p>Public delivery of uploaded images was confirmed functionally (plain GET works, no auth), but the bucket policy/CORS JSON itself was not read — no AWS console/CLI access this session.</p></div>
+      <div class="unverified"><span class="title">Vercel project settings for the storefront</span><p>Confirmed live and serving correctly from the outside; its environment variables and build settings were not inspected (no Vercel access this session).</p></div>
+    </div>
+  </section>
+
+  <footer>
+    Compiled from direct inspection — git history, live HTTP/TLS/DNS responses, and a local end-to-end test. No production data was modified while gathering this evidence.
+  </footer>
+
+</div>

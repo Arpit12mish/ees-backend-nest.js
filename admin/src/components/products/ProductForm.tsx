@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createProduct, updateProduct } from '@/lib/api/products.api';
+import { addProductImage, createProduct, updateProduct } from '@/lib/api/products.api';
 import { getClientToken } from '@/lib/auth/token-cookie';
 import { ErrorState } from '@/components/common/ErrorState';
 import { AttributesEditor } from './AttributesEditor';
+import { StagedProductImages, type StagedProductImage } from './StagedProductImages';
 import type { Category } from '@/lib/types/category.types';
 import type { ProductDetail, ProductInput } from '@/lib/types/product.types';
 
@@ -43,8 +45,10 @@ export function ProductForm({
   const [attributes, setAttributes] = useState<Record<string, unknown>>(
     initial?.attributes ?? {},
   );
+  const [stagedImages, setStagedImages] = useState<StagedProductImage[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [createdProductId, setCreatedProductId] = useState('');
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -58,7 +62,42 @@ export function ProductForm({
     try {
       if (mode === 'create') {
         const created = await createProduct(input, getClientToken());
+        if (stagedImages.length > 0) {
+          const token = getClientToken();
+          const settled = await Promise.allSettled(
+            stagedImages.map((img, index) =>
+              addProductImage(
+                created.id,
+                {
+                  imageUrl: img.result.originalUrl,
+                  thumbnailUrl: img.result.thumbnailUrl,
+                  cardUrl: img.result.cardUrl,
+                  detailUrl: img.result.detailUrl,
+                  storageProvider: img.result.provider,
+                  mimeType: img.result.mimeType,
+                  sizeBytes: img.result.size,
+                  width: img.result.width,
+                  height: img.result.height,
+                  altText: img.altText.trim() || form.name,
+                  sortOrder: index,
+                  isPrimary: img.isPrimary,
+                },
+                token,
+              ),
+            ),
+          );
+          const failedCount = settled.filter((r) => r.status === 'rejected').length;
+          if (failedCount > 0) {
+            setCreatedProductId(created.id);
+            setError(
+              `Product created, but ${failedCount} of ${stagedImages.length} image(s) failed to attach. Open the product to add ${failedCount > 1 ? 'them' : 'it'} again.`,
+            );
+            setSaving(false);
+            return;
+          }
+        }
         router.push(`/products/${created.id}`);
+        return;
       } else if (initial) {
         await updateProduct(initial.id, input, getClientToken());
         router.refresh();
@@ -76,6 +115,12 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-[var(--border)] bg-white p-4 sm:p-6">
+      {mode === 'create' ? (
+        <div className="rounded-md border border-[var(--border)] bg-[var(--soft)] px-4 py-3 text-sm text-[var(--heading)]">
+          Add images below if you have them ready, or skip for now — you&apos;ll be able to set stock and edit SEO details on the next screen either way.
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>Name</label>
@@ -140,6 +185,10 @@ export function ProductForm({
           className={inputClass}
         />
       </div>
+
+      {mode === 'create' ? (
+        <StagedProductImages images={stagedImages} onChange={setStagedImages} disabled={saving} />
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-4">
         <div>
@@ -270,15 +319,32 @@ export function ProductForm({
 
       <AttributesEditor initial={initial?.attributes} onChange={setAttributes} />
 
-      {error ? <ErrorState title="Could not save" description={error} /> : null}
+      {error ? (
+        <div className="space-y-2">
+          <ErrorState title={createdProductId ? 'Product created' : 'Could not save'} description={error} />
+          {createdProductId ? (
+            <Link href={`/products/${createdProductId}`} className="text-sm font-semibold text-[var(--brand)] hover:underline">
+              Open product →
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="min-h-11 rounded-md bg-[var(--brand)] px-5 text-sm font-semibold text-white hover:bg-[var(--brand-dark)] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {saving ? 'Saving…' : mode === 'create' ? 'Create product' : 'Save changes'}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={saving}
+          className="min-h-11 rounded-md bg-[var(--brand)] px-5 text-sm font-semibold text-white hover:bg-[var(--brand-dark)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {saving ? 'Saving…' : mode === 'create' ? 'Create product' : 'Save changes'}
+        </button>
+        <Link
+          href="/products"
+          className="min-h-11 inline-flex items-center rounded-md border border-[var(--border)] px-5 text-sm font-semibold text-[var(--heading)] hover:bg-[var(--soft)]"
+        >
+          Cancel
+        </Link>
+      </div>
     </form>
   );
 }

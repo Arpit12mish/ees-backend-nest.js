@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { upsertSeo } from '@/lib/api/seo.api';
 import { getClientToken } from '@/lib/auth/token-cookie';
 import { ErrorState } from '@/components/common/ErrorState';
+import { ImageUploadField } from '@/components/common/ImageUploadField';
 import type { SeoEntityType, SeoInput, SeoMetadataRecord } from '@/lib/types/seo.types';
 
 export function SeoEditor({
@@ -130,14 +131,12 @@ export function SeoEditor({
               className="mt-1 w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:border-[var(--brand)] focus:outline-none"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--heading)]">OG image URL</label>
-            <input
-              value={form.ogImageUrl}
-              onChange={(e) => setForm({ ...form, ogImageUrl: e.target.value })}
-              className="mt-1 w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:border-[var(--brand)] focus:outline-none"
-            />
-          </div>
+          <ImageUploadField
+            label="OG image"
+            value={form.ogImageUrl}
+            onChange={(ogImageUrl) => setForm({ ...form, ogImageUrl })}
+            disabled={saving}
+          />
           <div>
             <label className="block text-sm font-medium text-[var(--heading)]">Twitter title</label>
             <input
@@ -157,14 +156,12 @@ export function SeoEditor({
               className="mt-1 w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:border-[var(--brand)] focus:outline-none"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--heading)]">Twitter image URL</label>
-            <input
-              value={form.twitterImageUrl}
-              onChange={(e) => setForm({ ...form, twitterImageUrl: e.target.value })}
-              className="mt-1 w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:border-[var(--brand)] focus:outline-none"
-            />
-          </div>
+          <ImageUploadField
+            label="Twitter image"
+            value={form.twitterImageUrl}
+            onChange={(twitterImageUrl) => setForm({ ...form, twitterImageUrl })}
+            disabled={saving}
+          />
           <div>
             <label className="block text-sm font-medium text-[var(--heading)]">Schema type</label>
             <input

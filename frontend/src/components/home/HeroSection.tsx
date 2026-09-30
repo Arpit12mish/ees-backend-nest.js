@@ -4,8 +4,10 @@ import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { Container } from '@/components/common/Container';
+import { HeroReelsCarousel } from '@/components/home/HeroReelsCarousel';
+import type { HeroReel } from '@/lib/types/hero-reel.types';
 
-export function HeroSection() {
+export function HeroSection({ reels }: { reels: HeroReel[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -14,10 +16,28 @@ export function HeroSection() {
 
       gsap
         .timeline({ defaults: { ease: 'power3.out' } })
-        .from('[data-hero-heading]', { autoAlpha: 0, y: 24, duration: 0.7 });
+        .from('[data-hero-heading]', { autoAlpha: 0, y: 24, duration: 0.7 })
+        .from(
+          '[data-hero-reels]',
+          { autoAlpha: 0, y: 16, duration: 0.6 },
+          '-=0.3',
+        );
     },
     { scope: rootRef },
   );
+
+  if (reels.length > 0) {
+    return (
+      <section ref={rootRef} className="relative overflow-hidden bg-[#0a0a0a] py-8 sm:py-12">
+        <div data-hero-reels className="px-4 sm:px-6 lg:px-10">
+          <HeroReelsCarousel reels={reels} />
+          <p className="mt-4 text-center text-xs font-semibold uppercase tracking-[0.25em] text-white/60">
+            Reels / Videos
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section ref={rootRef} className="relative overflow-hidden bg-white text-[#111111]">

@@ -6,6 +6,7 @@ export const API_BASE_URL =
 type FetchOptions = RequestInit & {
   revalidate?: number;
   noStore?: boolean;
+  tags?: string[];
 };
 
 export function unwrapApiResponse<T>(response: ApiEnvelope<T>): T {
@@ -32,7 +33,7 @@ export async function apiFetch<T>(
   path: string,
   options: FetchOptions = {},
 ): Promise<T> {
-  const { revalidate, noStore, headers, ...init } = options;
+  const { revalidate, noStore, tags, headers, ...init } = options;
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
@@ -40,7 +41,7 @@ export async function apiFetch<T>(
       ...headers,
     },
     cache: noStore ? 'no-store' : init.cache,
-    next: noStore ? undefined : { revalidate },
+    next: noStore ? undefined : { revalidate, tags },
   });
 
   const body = await readApiEnvelope<T>(response);
