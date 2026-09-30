@@ -27,19 +27,27 @@ import {
 export class AdminOrdersController {
   constructor(private readonly service: AdminOrdersService) {}
 
+  // Orders carry customer PII and payment state, so — unlike most other
+  // admin modules — reads are role-gated too, not just writes. Explicitly
+  // excludes PARTNER: a product partner has no legitimate reason to see
+  // order/customer data. SUPER_ADMIN/ADMIN/EDITOR access is unchanged from
+  // before this controller had explicit @Roles on its GET routes.
   @Get()
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
   async findAll(@Query() query: AdminOrderQueryDto) {
     const data = await this.service.findAll(query);
     return { success: true, message: 'Orders fetched', data };
   }
 
   @Get('order-number/:orderNumber')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
   async findByOrderNumber(@Param('orderNumber') orderNumber: string) {
     const data = await this.service.findByOrderNumber(orderNumber);
     return { success: true, message: 'Order fetched', data };
   }
 
   @Get(':id')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
   async findOne(@Param('id') id: string) {
     const data = await this.service.findOne(id);
     return { success: true, message: 'Order fetched', data };

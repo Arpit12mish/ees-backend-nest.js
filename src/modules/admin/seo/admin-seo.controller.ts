@@ -46,21 +46,36 @@ export class AdminSeoController {
   }
 
   @Post()
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @Roles(
+    AdminRole.SUPER_ADMIN,
+    AdminRole.ADMIN,
+    AdminRole.EDITOR,
+    AdminRole.PARTNER,
+  )
   async create(@Body() dto: UpsertSeoDto) {
     const data = await this.service.create(dto);
     return { success: true, message: 'SEO metadata created', data };
   }
 
   @Put()
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @Roles(
+    AdminRole.SUPER_ADMIN,
+    AdminRole.ADMIN,
+    AdminRole.EDITOR,
+    AdminRole.PARTNER,
+  )
   async upsert(@Body() dto: UpsertSeoDto) {
     const data = await this.service.upsert(dto);
     return { success: true, message: 'SEO metadata saved', data };
   }
 
   @Patch(':id')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @Roles(
+    AdminRole.SUPER_ADMIN,
+    AdminRole.ADMIN,
+    AdminRole.EDITOR,
+    AdminRole.PARTNER,
+  )
   async update(@Param('id') id: string, @Body() dto: UpdateSeoDto) {
     const data = await this.service.update(id, dto);
     return { success: true, message: 'SEO metadata updated', data };

@@ -10,6 +10,10 @@ export default () => ({
   adminDefaultPassword: process.env.ADMIN_DEFAULT_PASSWORD ?? 'Admin@123456',
   uploadDriver: process.env.UPLOAD_DRIVER ?? 'local',
   maxUploadSizeMb: parseInt(process.env.MAX_UPLOAD_SIZE_MB ?? '5', 10),
+  maxVideoUploadSizeMb: parseInt(
+    process.env.MAX_VIDEO_UPLOAD_SIZE_MB ?? '30',
+    10,
+  ),
   r2AccountId: process.env.R2_ACCOUNT_ID,
   r2Endpoint: process.env.R2_ENDPOINT,
   r2AccessKeyId: process.env.R2_ACCESS_KEY_ID,
@@ -28,4 +32,5 @@ export default () => ({
   mailjetFromEmail: process.env.MAILJET_FROM_EMAIL,
   mailjetFromName: process.env.MAILJET_FROM_NAME ?? 'Enchanted Energy Store',
   contactNotificationEmail: process.env.CONTACT_NOTIFICATION_EMAIL,
+  revalidateSecret: process.env.REVALIDATE_SECRET,
 });

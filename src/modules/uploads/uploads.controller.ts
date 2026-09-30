@@ -24,4 +24,12 @@ export class UploadsController {
     const data = await this.service.uploadImage(file);
     return { success: true, message: 'Image uploaded successfully', data };
   }
+
+  @Post('video')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadVideo(@UploadedFile() file?: Express.Multer.File) {
+    const data = await this.service.uploadVideo(file);
+    return { success: true, message: 'Video uploaded successfully', data };
+  }
 }

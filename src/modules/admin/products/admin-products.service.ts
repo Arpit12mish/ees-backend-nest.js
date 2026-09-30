@@ -4,6 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
+import { RevalidationService } from '../../revalidation/revalidation.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import {
@@ -16,7 +17,10 @@ import { ProductStatus, StockStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class AdminProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly revalidation: RevalidationService,
+  ) {}
 
   private buildOrderBy(
     sort?: string,
@@ -148,6 +152,7 @@ export class AdminProductsService {
       },
     });
 
+    void this.revalidation.revalidate(['products', `product:${product.slug}`]);
     return this.formatProduct(product);
   }
 
@@ -209,6 +214,10 @@ export class AdminProductsService {
       },
     });
 
+    const tags = new Set(['products', `product:${product.slug}`]);
+    if (current.slug !== product.slug) tags.add(`product:${current.slug}`);
+    void this.revalidation.revalidate([...tags]);
+
     return this.formatProduct(product);
   }
 
@@ -225,19 +234,23 @@ export class AdminProductsService {
         ? new Date()
         : product.publishedAt;
 
-    return this.prisma.product.update({
+    const updated = await this.prisma.product.update({
       where: { id },
       data: { status, publishedAt },
-      select: { id: true, status: true, publishedAt: true },
+      select: { id: true, status: true, publishedAt: true, slug: true },
     });
+    void this.revalidation.revalidate(['products', `product:${updated.slug}`]);
+    return updated;
   }
 
   async remove(id: string) {
-    await this.findOne(id);
-    return this.prisma.product.update({
+    const existing = await this.findOne(id);
+    const product = await this.prisma.product.update({
       where: { id },
       data: { status: ProductStatus.INACTIVE },
     });
+    void this.revalidation.revalidate(['products', `product:${existing.slug}`]);
+    return product;
   }
 
   // --- Product Images ---

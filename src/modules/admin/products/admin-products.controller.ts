@@ -46,21 +46,31 @@ export class AdminProductsController {
   }
 
   @Post()
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @Roles(
+    AdminRole.SUPER_ADMIN,
+    AdminRole.ADMIN,
+    AdminRole.EDITOR,
+    AdminRole.PARTNER,
+  )
   async create(@Body() dto: CreateProductDto) {
     const data = await this.service.create(dto);
     return { success: true, message: 'Product created', data };
   }
 
   @Patch(':id')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @Roles(
+    AdminRole.SUPER_ADMIN,
+    AdminRole.ADMIN,
+    AdminRole.EDITOR,
+    AdminRole.PARTNER,
+  )
   async update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     const data = await this.service.update(id, dto);
     return { success: true, message: 'Product updated', data };
   }
 
   @Patch(':id/status')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.PARTNER)
   async updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto) {
     const data = await this.service.updateStatus(id, dto.status);
     return { success: true, message: 'Product status updated', data };
@@ -82,7 +92,12 @@ export class AdminProductsController {
   }
 
   @Post(':productId/images')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @Roles(
+    AdminRole.SUPER_ADMIN,
+    AdminRole.ADMIN,
+    AdminRole.EDITOR,
+    AdminRole.PARTNER,
+  )
   async addImage(
     @Param('productId') productId: string,
     @Body() dto: CreateProductImageDto,
@@ -98,7 +113,12 @@ export class AdminProductImagesController {
   constructor(private readonly service: AdminProductsService) {}
 
   @Patch(':imageId')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @Roles(
+    AdminRole.SUPER_ADMIN,
+    AdminRole.ADMIN,
+    AdminRole.EDITOR,
+    AdminRole.PARTNER,
+  )
   async updateImage(
     @Param('imageId') imageId: string,
     @Body() dto: UpdateProductImageDto,
@@ -115,7 +135,12 @@ export class AdminProductImagesController {
   }
 
   @Patch(':imageId/primary')
-  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.EDITOR)
+  @Roles(
+    AdminRole.SUPER_ADMIN,
+    AdminRole.ADMIN,
+    AdminRole.EDITOR,
+    AdminRole.PARTNER,
+  )
   async setPrimary(@Param('imageId') imageId: string) {
     const data = await this.service.setPrimaryImage(imageId);
     return { success: true, message: 'Primary image set', data };

@@ -16,6 +16,8 @@ export const CACHE_HEADERS = {
     'public, max-age=600, s-maxage=86400, stale-while-revalidate=604800',
   SERVICE_LIST:
     'public, max-age=600, s-maxage=86400, stale-while-revalidate=604800',
+  HERO_REEL_LIST:
+    'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
   // Cart, order, payment, upload, auth, and admin APIs must not be cached.
   NO_STORE: 'no-store',
 };

@@ -35,6 +35,10 @@ import { GuidesModule } from './modules/guides/guides.module';
 import { AdminGuidesModule } from './modules/admin/guides/admin-guides.module';
 import { FaqsModule } from './modules/faqs/faqs.module';
 import { AdminFaqsModule } from './modules/admin/faqs/admin-faqs.module';
+import { HeroReelsModule } from './modules/hero-reels/hero-reels.module';
+import { AdminHeroReelsModule } from './modules/admin/hero-reels/admin-hero-reels.module';
+import { AdminUsersModule } from './modules/admin/admin-users/admin-users.module';
+import { RevalidationModule } from './modules/revalidation/revalidation.module';
 
 @Module({
   imports: [
@@ -81,6 +85,10 @@ import { AdminFaqsModule } from './modules/admin/faqs/admin-faqs.module';
     AdminGuidesModule,
     FaqsModule,
     AdminFaqsModule,
+    HeroReelsModule,
+    AdminHeroReelsModule,
+    AdminUsersModule,
+    RevalidationModule,
   ],
 })
 export class AppModule {}

@@ -51,6 +51,7 @@ enum AdminRole {
   SUPER_ADMIN
   ADMIN
   EDITOR
+  PARTNER
 }
 
 enum CouponType {
@@ -162,9 +163,27 @@ model Product {
   cartItems          CartItem[]
   orderItems         OrderItem[]
   reviews            Review[]
+  heroReels          HeroReel[]
 
   @@index([status])
   @@index([categoryId])
+  @@index([priority])
+}
+
+model HeroReel {
+  id        String   @id @default(cuid())
+  videoUrl  String
+  posterUrl String?
+  altText   String?
+  productId String?
+  priority  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
   @@index([priority])
 }
 

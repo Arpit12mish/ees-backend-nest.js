@@ -12,6 +12,12 @@ const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 const WEBP_MIME_TYPE = 'image/webp';
 
+const ALLOWED_VIDEO_TYPES = new Set([
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+]);
+
 const IMAGE_VARIANTS = {
   thumbnail: { suffix: 'thumb', width: 300 },
   card: { suffix: 'card', width: 600 },
@@ -90,6 +96,53 @@ export class UploadsService {
     };
   }
 
+  async uploadVideo(file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException({
+        message: 'Video file is required',
+        errorCode: 'VIDEO_FILE_REQUIRED',
+      });
+    }
+
+    if (!ALLOWED_VIDEO_TYPES.has(file.mimetype)) {
+      throw new BadRequestException({
+        message: 'Unsupported video file type',
+        errorCode: 'INVALID_VIDEO_TYPE',
+      });
+    }
+
+    const maxMb = this.config.get<number>('maxVideoUploadSizeMb', 30);
+    const maxBytes = maxMb * 1024 * 1024;
+    if (file.size > maxBytes) {
+      throw new BadRequestException({
+        message: `Video size must be ${maxMb}MB or smaller`,
+        errorCode: 'VIDEO_TOO_LARGE',
+      });
+    }
+
+    const driver = this.config.get<string>('uploadDriver', 'local');
+    const provider = this.getStorageProvider(driver);
+    const uploadRoot = this.buildUploadRoot('hero-reels');
+    const uuid = randomUUID();
+    const extension = file.mimetype === 'video/webm' ? 'webm' : 'mp4';
+    const key = `${uploadRoot}/${uuid}.${extension}`;
+
+    await provider.uploadObject({
+      key,
+      body: file.buffer,
+      contentType: file.mimetype,
+      cacheControl: CACHE_HEADERS.IMAGE_OBJECT,
+    });
+
+    return {
+      provider: driver,
+      storageKey: key,
+      url: provider.getPublicUrl(key),
+      mimeType: file.mimetype,
+      size: file.size,
+    };
+  }
+
   private getStorageProvider(driver: string): StorageProvider {
     if (driver === 'local') return this.localStorage;
     if (driver === 'r2') return this.r2Storage;
@@ -101,11 +154,11 @@ export class UploadsService {
     });
   }
 
-  private buildUploadRoot() {
+  private buildUploadRoot(prefix: string = 'products') {
     const now = new Date();
     const year = now.getUTCFullYear();
     const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-    return `products/${year}/${month}`;
+    return `${prefix}/${year}/${month}`;
   }
 
   private async generateAndUploadVariants(
