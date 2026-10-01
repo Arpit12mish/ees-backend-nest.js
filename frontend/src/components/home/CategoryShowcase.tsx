@@ -37,7 +37,7 @@ export function CategoryShowcase({ categories }: { categories: Category[] }) {
 
         <Reveal>
           <h2 className="mt-12 text-center font-display text-3xl font-medium leading-tight sm:text-4xl">
-            Every positive does a world of good.
+            Positive energy attracts beautiful moments into your life.
           </h2>
         </Reveal>
 
