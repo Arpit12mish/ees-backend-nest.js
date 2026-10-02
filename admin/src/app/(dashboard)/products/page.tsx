@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { Pagination } from '@/components/common/Pagination';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import { resolveImageUrl } from '@/lib/utils/image-url';
 import { deleteProductAction } from './actions';
 import type { ProductStatus } from '@/lib/types/product.types';
@@ -29,10 +30,11 @@ export default async function ProductsPage({
   const categoryId = typeof params.categoryId === 'string' ? params.categoryId : undefined;
   const sort = typeof params.sort === 'string' ? (params.sort as never) : undefined;
   const page = typeof params.page === 'string' ? Number(params.page) : 1;
+  const includeInactive = params.includeInactive === '1';
 
   const token = await getServerToken();
   const [data, categories] = await Promise.all([
-    getProducts({ search, status, categoryId, sort, page, limit: 20 }, token),
+    getProducts({ search, status, categoryId, sort, page, limit: 20, includeInactive }, token),
     getCategories(token),
   ]);
 
@@ -42,6 +44,7 @@ export default async function ProductsPage({
     if (status) qs.set('status', status);
     if (categoryId) qs.set('categoryId', categoryId);
     if (sort) qs.set('sort', sort);
+    if (includeInactive) qs.set('includeInactive', '1');
     qs.set('page', String(targetPage));
     return `/products?${qs.toString()}`;
   }
@@ -50,7 +53,7 @@ export default async function ProductsPage({
     <div>
       <SectionHeading
         title="Products"
-        description={`${data.meta.total} products`}
+        description={`${data.meta.total} ${includeInactive ? '' : 'active '}products`}
         action={
           <RoleGate permission="products.write">
             <Link
@@ -104,6 +107,10 @@ export default async function ProductsPage({
           <option value="price_low_to_high">Price: low to high</option>
           <option value="price_high_to_low">Price: high to low</option>
         </select>
+        <label className="flex items-center gap-2 text-sm text-[var(--heading)]">
+          <input type="checkbox" name="includeInactive" value="1" defaultChecked={includeInactive} />
+          Show deleted / inactive
+        </label>
         <button
           type="submit"
           className="min-h-11 rounded-md border border-[var(--border)] px-4 text-sm font-semibold text-[var(--heading)] hover:border-[var(--brand)]"
@@ -172,12 +179,11 @@ export default async function ProductsPage({
                           Edit
                         </Link>
                         <RoleGate permission="products.delete">
-                          <form action={deleteProductAction}>
-                            <input type="hidden" name="id" value={product.id} />
-                            <button type="submit" className="font-semibold text-[var(--danger)]">
-                              Delete
-                            </button>
-                          </form>
+                          <DeleteButton
+                            id={product.id}
+                            action={deleteProductAction}
+                            confirmMessage={`Delete "${product.name}"? It will be hidden from the storefront and from this list. You can restore it later from the product's status settings.`}
+                          />
                         </RoleGate>
                       </div>
                     </td>

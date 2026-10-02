@@ -5,6 +5,7 @@ import { resolveImageUrl } from '@/lib/utils/image-url';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { HeroReel } from '@/lib/types/hero-reel.types';
 
 export function HeroReelsTable({
@@ -59,12 +60,11 @@ export function HeroReelsTable({
                     Edit
                   </Link>
                   <RoleGate permission="heroReels.delete">
-                    <form action={deleteAction}>
-                      <input type="hidden" name="id" value={reel.id} />
-                      <button type="submit" className="font-semibold text-[var(--danger)]">
-                        Delete
-                      </button>
-                    </form>
+                    <DeleteButton
+                      id={reel.id}
+                      action={deleteAction}
+                      confirmMessage="Delete this hero reel? This permanently removes it and cannot be undone."
+                    />
                   </RoleGate>
                 </div>
               </td>

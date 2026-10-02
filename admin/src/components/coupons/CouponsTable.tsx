@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useClientFilter } from '@/lib/hooks/useClientFilter';
 import { SearchInput } from '@/components/common/SearchInput';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { Coupon } from '@/lib/types/coupon.types';
 
 export function CouponsTable({
@@ -15,16 +17,34 @@ export function CouponsTable({
   coupons: Coupon[];
   deleteAction: (formData: FormData) => void | Promise<void>;
 }) {
-  const { query, setQuery, filtered } = useClientFilter(coupons, (c) => [c.code]);
+  const [showInactive, setShowInactive] = useState(false);
+  const visible = showInactive ? coupons : coupons.filter((c) => c.isActive);
+  const { query, setQuery, filtered } = useClientFilter(visible, (c) => [c.code]);
 
   return (
     <div>
-      <SearchInput value={query} onChange={setQuery} placeholder="Search coupon codes…" />
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <SearchInput value={query} onChange={setQuery} placeholder="Search coupon codes…" />
+        <label className="flex items-center gap-2 text-sm text-[var(--heading)]">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          Show deleted / inactive
+        </label>
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState
           title={coupons.length === 0 ? 'No coupons yet' : 'No matches'}
-          description={coupons.length === 0 ? undefined : 'Try a different search term.'}
+          description={
+            coupons.length === 0
+              ? undefined
+              : visible.length === 0
+                ? 'All coupons are inactive — check "Show deleted / inactive".'
+                : 'Try a different search term.'
+          }
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-white">
@@ -62,12 +82,11 @@ export function CouponsTable({
                         Edit
                       </Link>
                       <RoleGate permission="coupons.write">
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={coupon.id} />
-                          <button type="submit" className="font-semibold text-[var(--danger)]">
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton
+                          id={coupon.id}
+                          action={deleteAction}
+                          confirmMessage={`Delete coupon "${coupon.code}"? It will be deactivated and can no longer be applied at checkout.`}
+                        />
                       </RoleGate>
                     </div>
                   </td>

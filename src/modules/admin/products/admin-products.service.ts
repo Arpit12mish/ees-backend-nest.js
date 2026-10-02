@@ -45,7 +45,11 @@ export class AdminProductsService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.ProductWhereInput = {};
-    if (query.status) where.status = query.status;
+    if (query.status) {
+      where.status = query.status;
+    } else if (!query.includeInactive) {
+      where.status = { not: ProductStatus.INACTIVE };
+    }
     if (query.categoryId) where.categoryId = query.categoryId;
     if (query.search) {
       where.OR = [

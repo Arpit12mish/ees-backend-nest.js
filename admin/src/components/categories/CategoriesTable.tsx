@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useClientFilter } from '@/lib/hooks/useClientFilter';
 import { SearchInput } from '@/components/common/SearchInput';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { Category } from '@/lib/types/category.types';
 
 export function CategoriesTable({
@@ -15,16 +17,34 @@ export function CategoriesTable({
   categories: Category[];
   deleteAction: (formData: FormData) => void | Promise<void>;
 }) {
-  const { query, setQuery, filtered } = useClientFilter(categories, (c) => [c.name, c.slug]);
+  const [showInactive, setShowInactive] = useState(false);
+  const visible = showInactive ? categories : categories.filter((c) => c.isActive);
+  const { query, setQuery, filtered } = useClientFilter(visible, (c) => [c.name, c.slug]);
 
   return (
     <div>
-      <SearchInput value={query} onChange={setQuery} placeholder="Search categories…" />
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <SearchInput value={query} onChange={setQuery} placeholder="Search categories…" />
+        <label className="flex items-center gap-2 text-sm text-[var(--heading)]">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          Show deleted / inactive
+        </label>
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState
           title={categories.length === 0 ? 'No categories yet' : 'No matches'}
-          description={categories.length === 0 ? undefined : 'Try a different search term.'}
+          description={
+            categories.length === 0
+              ? undefined
+              : visible.length === 0
+                ? 'All categories are inactive — check "Show deleted / inactive".'
+                : 'Try a different search term.'
+          }
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-white">
@@ -59,12 +79,11 @@ export function CategoriesTable({
                         Edit
                       </Link>
                       <RoleGate permission="categories.write">
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={category.id} />
-                          <button type="submit" className="font-semibold text-[var(--danger)]">
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton
+                          id={category.id}
+                          action={deleteAction}
+                          confirmMessage={`Delete "${category.name}"? It will be deactivated and hidden from this list. You can reactivate it later by editing it.`}
+                        />
                       </RoleGate>
                     </div>
                   </td>

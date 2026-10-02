@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useClientFilter } from '@/lib/hooks/useClientFilter';
 import { SearchInput } from '@/components/common/SearchInput';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { Service } from '@/lib/types/service.types';
 
 export function ServicesTable({
@@ -15,16 +17,34 @@ export function ServicesTable({
   services: Service[];
   deleteAction: (formData: FormData) => void | Promise<void>;
 }) {
-  const { query, setQuery, filtered } = useClientFilter(services, (s) => [s.name, s.slug]);
+  const [showInactive, setShowInactive] = useState(false);
+  const visible = showInactive ? services : services.filter((s) => s.isActive);
+  const { query, setQuery, filtered } = useClientFilter(visible, (s) => [s.name, s.slug]);
 
   return (
     <div>
-      <SearchInput value={query} onChange={setQuery} placeholder="Search services…" />
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <SearchInput value={query} onChange={setQuery} placeholder="Search services…" />
+        <label className="flex items-center gap-2 text-sm text-[var(--heading)]">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          Show deleted / inactive
+        </label>
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState
           title={services.length === 0 ? 'No services yet' : 'No matches'}
-          description={services.length === 0 ? undefined : 'Try a different search term.'}
+          description={
+            services.length === 0
+              ? undefined
+              : visible.length === 0
+                ? 'All services are inactive — check "Show deleted / inactive".'
+                : 'Try a different search term.'
+          }
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-white">
@@ -59,12 +79,11 @@ export function ServicesTable({
                         Edit
                       </Link>
                       <RoleGate permission="services.write">
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={service.id} />
-                          <button type="submit" className="font-semibold text-[var(--danger)]">
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton
+                          id={service.id}
+                          action={deleteAction}
+                          confirmMessage={`Delete "${service.name}"? It will be deactivated and hidden from the storefront and this list.`}
+                        />
                       </RoleGate>
                     </div>
                   </td>

@@ -3,16 +3,24 @@ import {
   IsEnum,
   IsString,
   IsInt,
+  IsBoolean,
   Min,
   IsIn,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ProductStatus } from '@prisma/client';
 
 export class AdminProductQueryDto {
   @IsOptional()
   @IsEnum(ProductStatus)
   status?: ProductStatus;
+
+  // When no explicit status filter is given, the list excludes INACTIVE
+  // (deactivated/"deleted") products by default. Pass this to see them too.
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  includeInactive?: boolean;
 
   @IsOptional()
   @IsString()

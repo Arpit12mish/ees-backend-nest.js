@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useClientFilter } from '@/lib/hooks/useClientFilter';
 import { SearchInput } from '@/components/common/SearchInput';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { Collection } from '@/lib/types/collection.types';
 
 export function CollectionsTable({
@@ -15,16 +17,34 @@ export function CollectionsTable({
   collections: Collection[];
   deleteAction: (formData: FormData) => void | Promise<void>;
 }) {
-  const { query, setQuery, filtered } = useClientFilter(collections, (c) => [c.name, c.slug]);
+  const [showInactive, setShowInactive] = useState(false);
+  const visible = showInactive ? collections : collections.filter((c) => c.isActive);
+  const { query, setQuery, filtered } = useClientFilter(visible, (c) => [c.name, c.slug]);
 
   return (
     <div>
-      <SearchInput value={query} onChange={setQuery} placeholder="Search collections…" />
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <SearchInput value={query} onChange={setQuery} placeholder="Search collections…" />
+        <label className="flex items-center gap-2 text-sm text-[var(--heading)]">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          Show deleted / inactive
+        </label>
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState
           title={collections.length === 0 ? 'No collections yet' : 'No matches'}
-          description={collections.length === 0 ? undefined : 'Try a different search term.'}
+          description={
+            collections.length === 0
+              ? undefined
+              : visible.length === 0
+                ? 'All collections are inactive — check "Show deleted / inactive".'
+                : 'Try a different search term.'
+          }
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-white">
@@ -57,12 +77,11 @@ export function CollectionsTable({
                         Edit
                       </Link>
                       <RoleGate permission="collections.write">
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={collection.id} />
-                          <button type="submit" className="font-semibold text-[var(--danger)]">
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton
+                          id={collection.id}
+                          action={deleteAction}
+                          confirmMessage={`Delete "${collection.name}"? It will be deactivated and hidden from this list. You can reactivate it later by editing it.`}
+                        />
                       </RoleGate>
                     </div>
                   </td>

@@ -5,6 +5,7 @@ import { useClientFilter } from '@/lib/hooks/useClientFilter';
 import { SearchInput } from '@/components/common/SearchInput';
 import { EmptyState } from '@/components/common/EmptyState';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { SeoMetadataRecord } from '@/lib/types/seo.types';
 
 export function SeoRecordsTable({
@@ -64,12 +65,11 @@ export function SeoRecordsTable({
                         Edit
                       </Link>
                       <RoleGate permission="seo.delete">
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={record.id} />
-                          <button type="submit" className="font-semibold text-[var(--danger)]">
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton
+                          id={record.id}
+                          action={deleteAction}
+                          confirmMessage="Delete this SEO record? This permanently removes it and cannot be undone — the page will fall back to its default metadata."
+                        />
                       </RoleGate>
                     </div>
                   </td>

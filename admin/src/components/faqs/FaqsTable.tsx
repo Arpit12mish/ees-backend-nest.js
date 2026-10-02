@@ -6,6 +6,7 @@ import { SearchInput } from '@/components/common/SearchInput';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { Faq } from '@/lib/types/faq.types';
 
 export function FaqsTable({
@@ -62,12 +63,11 @@ export function FaqsTable({
                         Edit
                       </Link>
                       <RoleGate permission="faqs.delete">
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={faq.id} />
-                          <button type="submit" className="font-semibold text-[var(--danger)]">
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton
+                          id={faq.id}
+                          action={deleteAction}
+                          confirmMessage="Delete this FAQ? This permanently removes it and cannot be undone."
+                        />
                       </RoleGate>
                     </div>
                   </td>

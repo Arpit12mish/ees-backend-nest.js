@@ -6,6 +6,7 @@ import { SearchInput } from '@/components/common/SearchInput';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { Guide } from '@/lib/types/guide.types';
 
 export function GuidesTable({
@@ -61,12 +62,11 @@ export function GuidesTable({
                         Edit
                       </Link>
                       <RoleGate permission="guides.delete">
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={guide.id} />
-                          <button type="submit" className="font-semibold text-[var(--danger)]">
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton
+                          id={guide.id}
+                          action={deleteAction}
+                          confirmMessage={`Delete "${guide.title}"? This permanently removes it and cannot be undone.`}
+                        />
                       </RoleGate>
                     </div>
                   </td>

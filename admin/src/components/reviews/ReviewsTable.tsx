@@ -5,6 +5,7 @@ import { SearchInput } from '@/components/common/SearchInput';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/common/Badge';
 import { RoleGate } from '@/components/common/RoleGate';
+import { DeleteButton } from '@/components/common/DeleteButton';
 import type { Review } from '@/lib/types/review.types';
 
 export function ReviewsTable({
@@ -90,12 +91,11 @@ export function ReviewsTable({
                         )}
                       </RoleGate>
                       <RoleGate permission="reviews.delete">
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={review.id} />
-                          <button type="submit" className="font-semibold text-[var(--danger)]">
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton
+                          id={review.id}
+                          action={deleteAction}
+                          confirmMessage="Delete this review? This permanently removes it and cannot be undone."
+                        />
                       </RoleGate>
                     </div>
                   </td>

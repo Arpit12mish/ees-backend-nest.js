@@ -80,6 +80,7 @@ export type ProductInput = {
 
 export type AdminProductQuery = {
   status?: ProductStatus;
+  includeInactive?: boolean;
   categoryId?: string;
   search?: string;
   sort?: 'newest' | 'oldest' | 'price_low_to_high' | 'price_high_to_low' | 'priority';
